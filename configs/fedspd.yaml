@@ -1,0 +1,104 @@
+# FedSPD default config. Replace paths with patient-level client folders.
+seed: 2026
+communication_rounds: 25
+local_epochs: 1
+feature_align_lambda: 0.05
+fedprox_mu: 0.01
+fedmix_alpha: 0.4
+fedmix_weak_weight: 0.1
+fedproto_lambda: 0.05
+fedfomo_M: 3
+fedbabu_head_epochs: 1
+fedala_steps: 5
+fedala_lr: 0.05
+fedala_batches: 2
+fedala_layer_idx: 0
+fedala_eta: 1.0
+max_steps_per_client: null
+drop_clients_per_round: 0
+mamlpp_steps: 0
+mamlpp_inner_lr: 0.001
+mamlpp_outer_lr: 0.1
+out_dir: ./work_dirs/fedspd
+
+data_path: /root/autodl-tmp/Data/FedSPD_clients
+client_names: [client1, client2, client3, client4, client5]
+# FedMix 可选：pixel / box / image。默认都按 pixel 处理。
+client_supervision: {}
+
+train_dataset:
+  dataset:
+    name: paired-image-folders
+    args:
+      root_path_1: /path/to/client/support/img
+      root_path_2: /path/to/client/support/mask
+      cache: none
+      split_key: train
+  wrapper:
+    name: train
+    args:
+      inp_size: 256
+      augment: false
+  batch_size: 1
+  num_workers: 4
+  inner_epochs: 1
+
+val_dataset:
+  dataset:
+    name: paired-image-folders
+    args:
+      root_path_1: /path/to/client/query/img
+      root_path_2: /path/to/client/query/mask
+      cache: none
+      split_key: train
+  wrapper:
+    name: train
+    args:
+      inp_size: 256
+      augment: false
+  batch_size: 1
+  num_workers: 4
+
+sam_checkpoint: /root/SAM_Adapter_MAML/pretrained/sam_vit_b_01ec64.pth
+model:
+  name: sam
+  args:
+    inp_size: 256
+    loss: iou
+    encoder_mode:
+      name: sam
+      img_size: 256
+      mlp_ratio: 4
+      patch_size: 16
+      qkv_bias: true
+      use_rel_pos: true
+      window_size: 14
+      out_chans: 256
+      scale_factor: 32
+      input_type: fft
+      freq_nums: 0.25
+      prompt_type: highpass
+      prompt_embed_dim: 256
+      tuning_stage: 1234
+      handcrafted_tune: true
+      embedding_tune: true
+      adaptor: adaptor
+      embed_dim: 768
+      depth: 12
+      num_heads: 12
+      global_attn_indexes: [2, 5, 8, 11]
+      train_batch_size: 1
+      val_batch_size: 1
+      # FedSPD defaults
+      use_lora: true
+      lora_rank: 4
+      lora_alpha: 8
+      lora_dropout: 0.0
+      num_points: 40       # N_p
+      num_task_tokens: 10  # N_t
+optimizer:
+  name: sgd
+  args:
+    lr: 0.001
+    momentum: 0.9
+    weight_decay: 0.0005
